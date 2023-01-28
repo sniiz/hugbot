@@ -7,7 +7,7 @@ import json
 bot = discord.Client(intents=discord.Intents.all())  # bad idea probably
 prefix = "hb."
 
-path = "/" # change this to your path to the repo folder
+path = "/home/sniiz/code/hugbot/"  # change this to your path to the repo folder
 
 log = lambda x: print(f"[LOG] {x}")
 
@@ -279,7 +279,7 @@ async def on_message(message: discord.Message):
 **{prefix}help** - show this message
 **{prefix}leaderboard** - see the top huggers and huggees
 if you have any questions or suggestions, `haley 👻#5308` will be happy to help <3
-feel free to contribute on github (https://github.com/sniiz/hugbot)!
+feel free to contribute on github ( https://github.com/sniiz/hugbot )!
 """
         )
 
