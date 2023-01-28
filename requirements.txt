@@ -1,0 +1,4 @@
+discord
+opencv-python
+numpy
+requests
