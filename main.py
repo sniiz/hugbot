@@ -3,6 +3,7 @@ import cv2
 import requests
 import os
 import json
+import asyncio
 
 bot = discord.Client(intents=discord.Intents.all())  # bad idea probably
 prefix = "hb."
@@ -134,9 +135,11 @@ async def on_message(message: discord.Message):
             )
             os.remove(f"{path}{session}A.png")
             os.remove(f"{path}{session}T.png")
+            await botReply.remove_reaction("🫂", bot.user)
             return
 
         log("accepted")
+        await botReply.remove_reaction("🫂", bot.user)
 
         background = cv2.imread(f"{path}assets/hug.png")
 
@@ -196,6 +199,10 @@ async def on_message(message: discord.Message):
         os.remove(f"{path}{session}A.png")
         os.remove(f"{path}{session}T.png")
         # hehe rat
+
+        await asyncio.sleep(240)
+
+        await botReply.edit(attachments=[])
 
     elif command == "leaderboard":
         with open(f"{path}leaderboard.json", "r") as f:
