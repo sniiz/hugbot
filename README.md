@@ -14,7 +14,7 @@ if you decide to, god forbid, contribute to this project, i am not responsible f
 
 you can add the bot [here](https://discord.com/api/oauth2/authorize?client_id=1066656711995301928&permissions=1374456768576&scope=bot). if anything goes wrong or you have any questions or anything else to say, you can contact me on discord at `haley 👻#5308`.
 
-beware that this bot is hosted on the computer equivalent of your grandma's toaster, so 100% uptime or responsiveness is not guaranteed.
+beware that this bot is hosted on the computer equivalent of your grandma's toaster, so 100% uptime or responsiveness are not guaranteed.
 
 ---
 
