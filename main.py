@@ -59,20 +59,35 @@ async def on_message(message: discord.Message):
             authorPic = cv2.imread(name)
 
         log("getting target avatar")
-        if not message.mentions:
+
+        test = False
+        delete = True
+
+        if "TESTUSER" in message.content:
+            target = bot.user
+            test = True
+        elif message.mentions:
+            target = message.mentions[0]
+            if target.id == bot.user.id:
+                await message.reply(
+                    "unfortunately, you can't hug me. i am a bot, after all :("
+                )
+                return
+            if target.bot:
+                await message.reply("sadly bots can't accept hugs :(")
+                return
+        else:
             await message.reply("mention someone to hug them!")
             return
 
-        target = message.mentions[0]
-        if target.id == bot.user.id:
-            await message.reply(
-                "unfortunately, you can't hug me. i am a bot, after all :("
-            )
-            return
+        if "-nd" in message.content:
+            delete = False
 
-        if target.bot:
-            await message.reply("sadly bots can't accept hugs :(")
-            return
+        messageText = message.content.replace(f"{prefix}hug", "").replace("TESTUSER", "").replace("-nd", "").strip().split()
+
+        if messageText:
+            messageText = filter(lambda x: not x.startswith("<@"), messageText)
+            messageText = " ".join(messageText)
 
         if target.id == message.author.id:
             await message.reply(
@@ -109,6 +124,28 @@ async def on_message(message: discord.Message):
             bgW // 2 - 150 : bgW // 2 + 150,
         ] = authorPic
 
+        if messageText:
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            # TODO: custom font
+            fontScale = 1.5
+            fontColor = (0, 0, 0)
+            lineType = 5
+
+            textSize = cv2.getTextSize(messageText, font, fontScale, lineType)[0]
+
+            textX = (bgW - textSize[0]) // 2
+            textY = bgH // 2 - offsetY - 210
+
+            cv2.putText(
+                background,
+                messageText,
+                (textX, textY),
+                font,
+                fontScale,
+                fontColor,
+                lineType,
+            )
+
         cv2.imwrite(f"{path}{session}R.png", background)
 
         log("sending")
@@ -124,19 +161,22 @@ async def on_message(message: discord.Message):
         def check(reaction, user):
             return user == target and str(reaction.emoji) == "🫂"
 
-        try:
-            reaction, user = await bot.wait_for(
-                "reaction_add", timeout=120.0, check=check
-            )
-        except:
-            await botReply.edit(
-                content=f"<@{target.id}> didn't accept the hug in time! 😢",
-                attachments=[],
-            )
-            os.remove(f"{path}{session}A.png")
-            os.remove(f"{path}{session}T.png")
-            await botReply.remove_reaction("🫂", bot.user)
-            return
+        if test:
+            await asyncio.sleep(5)
+        else:
+            try:
+                reaction, user = await bot.wait_for(
+                    "reaction_add", timeout=120.0, check=check
+                )
+            except:
+                await botReply.edit(
+                    content=f"<@{target.id}> didn't accept the hug in time! 😢",
+                    attachments=[],
+                )
+                os.remove(f"{path}{session}A.png")
+                os.remove(f"{path}{session}T.png")
+                await botReply.remove_reaction("🫂", bot.user)
+                return
 
         log("accepted")
         await botReply.remove_reaction("🫂", bot.user)
@@ -159,6 +199,17 @@ async def on_message(message: discord.Message):
             bgW // 2 + offsetXY[0] - 140 : bgW // 2 + offsetXY[0] + 140,
         ] = targetPic
 
+        if messageText:
+            cv2.putText(
+                background,
+                messageText,
+                (textX, textY),
+                font,
+                fontScale,
+                fontColor,
+                lineType,
+            )
+
         # save
         cv2.imwrite(f"{path}{session}R.png", background)
 
@@ -167,42 +218,44 @@ async def on_message(message: discord.Message):
             attachments=[discord.File(f"{path}{session}R.png", filename="hug.png")],
         )
 
-        hugs += 1
+        if not test:
+            hugs += 1
 
-        with open(f"{path}hug.log", "w") as f:
-            f.write(str(hugs))
+            with open(f"{path}hug.log", "w") as f:
+                f.write(str(hugs))
 
-        with open(f"{path}leaderboard.json", "r") as f:
-            leaderboard = json.load(f)
+            with open(f"{path}leaderboard.json", "r") as f:
+                leaderboard = json.load(f)
 
-        if str(message.author.id) in leaderboard:
-            leaderboard[str(message.author.id)]["given"] += 1
-        else:
-            leaderboard[str(message.author.id)] = {"given": 1, "received": 0}
+            if str(message.author.id) in leaderboard:
+                leaderboard[str(message.author.id)]["given"] += 1
+            else:
+                leaderboard[str(message.author.id)] = {"given": 1, "received": 0}
 
-        if str(target.id) in leaderboard:
-            leaderboard[str(target.id)]["received"] += 1
-        else:
-            leaderboard[str(target.id)] = {"given": 0, "received": 1}
+            if str(target.id) in leaderboard:
+                leaderboard[str(target.id)]["received"] += 1
+            else:
+                leaderboard[str(target.id)] = {"given": 0, "received": 1}
 
-        with open(f"{path}leaderboard.json", "w") as f:
-            json.dump(leaderboard, f)
+            with open(f"{path}leaderboard.json", "w") as f:
+                json.dump(leaderboard, f)
 
-        await bot.change_presence(
-            activity=discord.Activity(
-                type=discord.ActivityType.watching,
-                name=f"{hugs} hugs given! | {prefix}help",
+            await bot.change_presence(
+                activity=discord.Activity(
+                    type=discord.ActivityType.watching,
+                    name=f"{hugs} hugs given! | {prefix}help",
+                )
             )
-        )
 
         os.remove(f"{path}{session}R.png")
         os.remove(f"{path}{session}A.png")
         os.remove(f"{path}{session}T.png")
         # hehe rat
 
-        await asyncio.sleep(240)
+        if delete:
+            await asyncio.sleep(240)
 
-        await botReply.edit(attachments=[])
+            await botReply.edit(attachments=[])
 
     elif command == "leaderboard":
         with open(f"{path}leaderboard.json", "r") as f:
