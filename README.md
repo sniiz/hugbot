@@ -1,6 +1,6 @@
 # hugbot
 
-silly discord bot to hug your friends (or enemies, it doesnt care) through the power of the internet
+silly discord bot to hug your friends (or enemies, it doesn't care) through the power of the internet
 
 ## ⚠️ WARNING ⚠️
 
