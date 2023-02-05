@@ -4,23 +4,44 @@ import requests
 import os
 import json
 import asyncio
+import random
+import time
 
 bot = discord.Client(intents=discord.Intents.all())  # bad idea probably
 prefix = "hb."
 
 path = "/home/sniiz/code/hugbot/"  # change this to your path to the repo folder
 
-log = lambda x: print(f"[LOG] {x}")
+def log(x):
+    print(f"[HB {time.time()}] {x}")
+    open(f"{path}log.txt", "a").write(f"[HB {time.time()}] {x}")
 
 hugs = 0
+
+hugTargetChannel = 1068261928604024852
+hugTargetServer = 1036940104536703036
+
+recentAutoHugs = {}
 
 with open(f"{path}hug.log", "r") as f:
     hugs = int(f.read())
 
+hfToken = open(f"{path}hftoken.txt", "r").read()
+
+
+def sentiment(text):
+    url = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment-latest"
+    headers = {"Authorization": f"Bearer {hfToken}"}
+    res = requests.post(url, headers=headers, json={"inputs": text})
+    log(res.json())
+    if res.status_code != 200:
+        return "error", 0
+    return res.json()[0][0]["label"], res.json()[0][0]["score"]
+
 
 @bot.event
 async def on_ready():
-    print("hugger online")
+    log("hugger online")
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching,
@@ -32,9 +53,32 @@ async def on_ready():
 @bot.event
 async def on_message(message: discord.Message):
     global hugs
+    global recentAutoHugs
+
+    global command
+    command = "NONE"
+
     if not message.content.startswith(prefix):
-        return
-    command = message.clean_content.split()[0].replace(prefix, "")
+        autoHugBlacklist = open(f"{path}donthug.log", "r").read().splitlines()
+        if str(message.author.id) in autoHugBlacklist:
+            return
+        if message.author.bot:
+            return
+        if random.randint(0, 10) > 6:
+            return
+        if (
+            message.author.id in recentAutoHugs
+            and time.time() - recentAutoHugs[message.author.id] < 120
+        ):
+            return
+        messageSentiment, score = sentiment(message.clean_content)
+        threshold = 0.9
+        if messageSentiment == "negative" and score > threshold:
+            await message.reply(f"hb.hug {message.author.mention}")
+            recentAutoHugs[message.author.id] = time.time()
+            return
+    else:
+        command = message.clean_content.split()[0].replace(prefix, "")
 
     if command == "hug":
         session = message.id
@@ -83,7 +127,13 @@ async def on_message(message: discord.Message):
         if "-nd" in message.content:
             delete = False
 
-        messageText = message.content.replace(f"{prefix}hug", "").replace("TESTUSER", "").replace("-nd", "").strip().split()
+        messageText = (
+            message.content.replace(f"{prefix}hug", "")
+            .replace("TESTUSER", "")
+            .replace("-nd", "")
+            .strip()
+            .split()
+        )
 
         if messageText:
             messageText = filter(lambda x: not x.startswith("<@"), messageText)
@@ -149,7 +199,22 @@ async def on_message(message: discord.Message):
         cv2.imwrite(f"{path}{session}R.png", background)
 
         log("sending")
-        botReply = await message.reply(
+
+        channel = message.channel
+        guild = message.guild if message.guild else {"id": 0}  # ew
+        if guild.id == hugTargetServer:
+            if not message.channel.id == hugTargetChannel and not message.author.bot:
+                smileys = [
+                    ":)",
+                    ":D",
+                    "<3",
+                    "^^",
+                    "c:",
+                ]
+                await message.reply(f"<#{hugTargetChannel}> {random.choice(smileys)}")
+            channel = bot.get_channel(hugTargetChannel)
+
+        botReply = await channel.send(
             f"<@{message.author.id}> offers a hug to <@{target.id}>! {target.display_name}, react with 🫂 to accept!",
             file=discord.File(f"{path}{session}R.png", filename="hug.png"),
         )
@@ -170,7 +235,7 @@ async def on_message(message: discord.Message):
                 )
             except:
                 await botReply.edit(
-                    content=f"<@{target.id}> didn't accept the hug in time! 😢",
+                    content=f"<@{target.id}> didn't accept the hug in time! :'(",
                     attachments=[],
                 )
                 os.remove(f"{path}{session}A.png")
@@ -218,7 +283,7 @@ async def on_message(message: discord.Message):
             attachments=[discord.File(f"{path}{session}R.png", filename="hug.png")],
         )
 
-        if not test:
+        if not test and not message.author.id == bot.user.id:
             hugs += 1
 
             with open(f"{path}hug.log", "w") as f:
@@ -257,6 +322,24 @@ async def on_message(message: discord.Message):
 
             await botReply.edit(attachments=[])
 
+    elif command == "dontautohug":
+        autoHugBlacklist = open(f"{path}donthug.log", "r").read().splitlines()
+        await message.reply("ok :(")
+        if not str(message.author.id) in autoHugBlacklist:
+            autoHugBlacklist.append(str(message.author.id))
+            with open(f"{path}donthug.log", "w") as f:
+                f.write("\n".join(autoHugBlacklist))
+        return
+
+    elif command == "doautohug":
+        autoHugBlacklist = open(f"{path}donthug.log", "r").read().splitlines()
+        await message.reply("yay :)")
+        if str(message.author.id) in autoHugBlacklist:
+            autoHugBlacklist.remove(str(message.author.id))
+            with open(f"{path}donthug.log", "w") as f:
+                f.write("\n".join(autoHugBlacklist))
+        return
+
     elif command == "leaderboard":
         with open(f"{path}leaderboard.json", "r") as f:
             leaderboard = json.load(f)
@@ -282,17 +365,17 @@ async def on_message(message: discord.Message):
             name = user.display_name
             output += f"{bold}{i + 1}. {name} - {data['given']} hugs given{bold}\n"
 
-        if (
-            not message.author.id in leaderboardGivenTop
-            and message.author.id in leaderboard
-        ):
+        topIds = list(int(x[0]) for x in leaderboardGivenTop)
+        ids = list(int(x[0]) for x in leaderboardGiven)
+
+        if (not message.author.id in topIds) and (message.author.id in ids):
             position = (
                 leaderboardGiven.index(
                     (str(message.author.id), leaderboard[str(message.author.id)])
                 )
                 + 1
             )
-            output += f"...\n{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['given']} hugs given"
+            output += f"...\n**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['given']} hugs given**"
 
         await message.reply(output)
 
@@ -318,17 +401,16 @@ async def on_message(message: discord.Message):
                 f"{bold}{i + 1}. {name} - {data['received']} hugs received{bold}\n"
             )
 
-        if (
-            not message.author.id in leaderboardReceivedTop
-            and message.author.id in leaderboard
-        ):
+        topIds = list(int(x[0]) for x in leaderboardReceivedTop)
+        ids = list(int(x[0]) for x in leaderboardReceived)
+        if (not message.author.id in topIds) and (message.author.id in ids):
             position = (
                 leaderboardReceived.index(
                     (str(message.author.id), leaderboard[str(message.author.id)])
                 )
                 + 1
             )
-            output += f"...\n{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received"
+            output += f"...\n**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received**"
 
         await message.channel.send(output)
 
@@ -338,6 +420,9 @@ async def on_message(message: discord.Message):
 **{prefix}hug @user** - hug someone!
 **{prefix}help** - show this message
 **{prefix}leaderboard** - see the top huggers and huggees
+**{prefix}nick** - change hugbot's nickname in this server
+**{prefix}dontautohug** - hugbot will no longer autohug you
+**{prefix}doautohug** - hugbot will autohug you again
 if you have any questions or suggestions, `haley 👻#5308` will be happy to help <3
 feel free to contribute on github ( https://github.com/sniiz/hugbot )!
 """
@@ -355,6 +440,9 @@ feel free to contribute on github ( https://github.com/sniiz/hugbot )!
                 else None
             )
             await message.reply(f"changed nickname in {guild.name}")
+
+    elif command == "NONE":
+        pass
 
     else:
         await message.reply(
