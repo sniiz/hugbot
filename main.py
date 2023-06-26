@@ -281,7 +281,7 @@ async def on_message(message: discord.Message):
         cv2.imwrite(f"{path}{session}R.png", background)
 
         await botReply.edit(
-            content=f"{target.display_name} accepted {message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug! {'raccoodles' if 609808863914491944 in [message.author.id, target.id] else ''} ❤️\n***{messageText if messageText else ''}***",
+            content=f"{target.display_name} accepted {message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug! {'raccoodles' if 609808863914491944 in [message.author.id, target.id] else ''} ❤️\n{f'***{messageText}***' if messageText else ''}",
             attachments=[discord.File(f"{path}{session}R.png", filename="hug.png")],
         )
 
