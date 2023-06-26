@@ -12,9 +12,11 @@ prefix = "hb."
 
 path = "/home/sniiz/code/hugbot/"  # change this to your path to the repo folder
 
+
 def log(x):
     print(f"[HB {time.time()}] {x}")
-    open(f"{path}log.txt", "a").write(f"[HB {time.time()}] {x}")
+    open(f"{path}log.txt", "a").write(f"[HB {time.time()}] {x}\n")
+
 
 hugs = 0
 
@@ -64,15 +66,15 @@ async def on_message(message: discord.Message):
             return
         if message.author.bot:
             return
-        if random.randint(0, 10) > 6:
+        if random.randint(0, 10) > 5:
             return
         if (
             message.author.id in recentAutoHugs
-            and time.time() - recentAutoHugs[message.author.id] < 120
+            and time.time() - recentAutoHugs[message.author.id] < 600
         ):
             return
         messageSentiment, score = sentiment(message.clean_content)
-        threshold = 0.9
+        threshold = 0.93
         if messageSentiment == "negative" and score > threshold:
             await message.reply(f"hb.hug {message.author.mention}")
             recentAutoHugs[message.author.id] = time.time()
@@ -201,8 +203,8 @@ async def on_message(message: discord.Message):
         log("sending")
 
         channel = message.channel
-        guild = message.guild if message.guild else {"id": 0}  # ew
-        if guild.id == hugTargetServer:
+        guildId = message.guild.id if message.guild else 0
+        if guildId == hugTargetServer:
             if not message.channel.id == hugTargetChannel and not message.author.bot:
                 smileys = [
                     ":)",
@@ -231,11 +233,11 @@ async def on_message(message: discord.Message):
         else:
             try:
                 reaction, user = await bot.wait_for(
-                    "reaction_add", timeout=120.0, check=check
+                    "reaction_add", timeout=1200.0, check=check
                 )
             except:
                 await botReply.edit(
-                    content=f"<@{target.id}> didn't accept the hug in time! :'(",
+                    content=f"<@{target.id}> didn't accept {message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug in time! :'(",
                     attachments=[],
                 )
                 os.remove(f"{path}{session}A.png")
@@ -279,7 +281,7 @@ async def on_message(message: discord.Message):
         cv2.imwrite(f"{path}{session}R.png", background)
 
         await botReply.edit(
-            content=f"{target.display_name} accepted the hug! ❤️",
+            content=f"{target.display_name} accepted {message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug! {'raccoodles' if 609808863914491944 in [message.author.id, target.id] else ''} ❤️",
             attachments=[discord.File(f"{path}{session}R.png", filename="hug.png")],
         )
 
@@ -318,7 +320,7 @@ async def on_message(message: discord.Message):
         # hehe rat
 
         if delete:
-            await asyncio.sleep(240)
+            await asyncio.sleep(1200)
 
             await botReply.edit(attachments=[])
 
@@ -361,8 +363,10 @@ async def on_message(message: discord.Message):
                 user = message.guild.get_member(int(id))
             if not user:
                 user = bot.get_user(int(id))
-
-            name = user.display_name
+            try:
+                name = user.display_name
+            except:
+                name = "(unknown)"
             output += f"{bold}{i + 1}. {name} - {data['given']} hugs given{bold}\n"
 
         topIds = list(int(x[0]) for x in leaderboardGivenTop)
@@ -396,7 +400,10 @@ async def on_message(message: discord.Message):
                 user = message.guild.get_member(int(id))
             if not user:
                 user = bot.get_user(int(id))
-            name = user.display_name
+            try:
+                name = user.display_name
+            except:
+                name = "(unknown)"
             output += (
                 f"{bold}{i + 1}. {name} - {data['received']} hugs received{bold}\n"
             )
@@ -423,7 +430,7 @@ async def on_message(message: discord.Message):
 **{prefix}nick** - change hugbot's nickname in this server
 **{prefix}dontautohug** - hugbot will no longer autohug you
 **{prefix}doautohug** - hugbot will autohug you again
-if you have any questions or suggestions, `haley 👻#5308` will be happy to help <3
+if you have any questions or suggestions, `@smhaley` will be happy to help <3
 feel free to contribute on github ( https://github.com/sniiz/hugbot )!
 """
         )
