@@ -281,7 +281,7 @@ async def on_message(message: discord.Message):
         cv2.imwrite(f"{path}{session}R.png", background)
 
         await botReply.edit(
-            content=f"{target.display_name} accepted {message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug! {'raccoodles' if 609808863914491944 in [message.author.id, target.id] else ''} ❤️",
+            content=f"{target.display_name} accepted {message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug! {'raccoodles' if 609808863914491944 in [message.author.id, target.id] else ''} ❤️\n***{messageText if messageText else ''}***",
             attachments=[discord.File(f"{path}{session}R.png", filename="hug.png")],
         )
 
@@ -313,6 +313,19 @@ async def on_message(message: discord.Message):
                     name=f"{hugs} hugs given! | {prefix}help",
                 )
             )
+
+            if hugs % 100 == 0:
+                replies = [
+                    f"oh hey, that's the lucky {hugs}th hug! that's pretty cool, right? :D",
+                    f"hey, you're the {hugs}th hug! how cool is that? :D",
+                    f"woah, that's the {hugs}th hug! that's a lot of hugs! :D",
+                    f"oh wow, that's the {hugs}th hug! how cool is that? :D",
+                    # F"hey, that's the {hugs}th hug! that's a lot of hugs! :D",
+                ]
+
+                await botReply.reply(
+                    random.choice(replies),
+                )
 
         os.remove(f"{path}{session}R.png")
         os.remove(f"{path}{session}A.png")
@@ -354,7 +367,7 @@ async def on_message(message: discord.Message):
 
         output = "top huggers:\n"
 
-        for (i, (id, data)) in enumerate(leaderboardGivenTop):
+        for i, (id, data) in enumerate(leaderboardGivenTop):
             if data["given"] == 0:
                 break
             bold = "**" if message.author.id == int(id) else ""
@@ -391,7 +404,7 @@ async def on_message(message: discord.Message):
 
         output = "------------\ntop huggees:\n"
 
-        for (i, (id, data)) in enumerate(leaderboardReceivedTop):
+        for i, (id, data) in enumerate(leaderboardReceivedTop):
             if data["received"] == 0:
                 break
             bold = "**" if message.author.id == int(id) else ""
