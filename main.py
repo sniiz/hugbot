@@ -432,7 +432,7 @@ async def on_message(message: discord.Message):
 
         leaderboardReceivedTop = leaderboardReceived[:5]
 
-        output += "\ntop huggees: ```\n"
+        output += "\n```\ntop huggees: ```\n"
 
         for i, (id, data) in enumerate(leaderboardReceivedTop):
             if data["received"] == 0:
@@ -492,6 +492,8 @@ async def on_message(message: discord.Message):
                 output += f"{position + 1}. {name} - {leaderboard[str(userBelowID)]['received']} hugs received\n"
             except:
                 pass
+
+        output += "\n```"
 
         await message.reply(output)
 
