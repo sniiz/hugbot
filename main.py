@@ -475,7 +475,7 @@ async def on_message(message: discord.Message):
 
             output += f"{position - 1}. {name} - {leaderboard[str(userAboveID)]['received']} hugs received\n"
 
-            output += f"{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received  < you\n"
+            output += f"{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received  < you!\n"
 
             try:
                 userBelowID = leaderboardReceived[position][0]
