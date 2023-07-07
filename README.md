@@ -27,7 +27,7 @@ first of all, why? second of all, you can do that by
 3. running `python3 setup.py` which will create all the necessary files for you (how sweet of it)
 4. editing the folder path in `main.py` to the path you cloned the repo to (fyi that's line 10)
 5. running `python3 main.py`
-6. reconcidering your life choices that led you to this point
+6. reconsidering your life choices that led you to this point
 
 ---
 
