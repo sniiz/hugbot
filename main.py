@@ -357,11 +357,11 @@ async def on_message(message: discord.Message):
 
     elif command == "leaderboard":
         with open(f"{path}leaderboard.json", "r") as f:
-            leaderboard = json.load(f)
+            leaderboard = json.load(f)  # {id: {given: int, received: int}}
 
         leaderboardGiven = sorted(
             leaderboard.items(), key=lambda x: x[1]["given"], reverse=True
-        )
+        )  # [(id, {given: int, received: int})]
 
         leaderboardGivenTop = leaderboardGiven[:5]
 
@@ -392,9 +392,39 @@ async def on_message(message: discord.Message):
                 )
                 + 1
             )
-            output += f"...\n**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['given']} hugs given**"
 
-        await message.reply(output)
+            userAboveID = leaderboardGiven[position - 2][0]
+            userAbove = None
+            if message.guild:
+                userAbove = message.guild.get_member(int(userAboveID))
+            if not userAbove:
+                userAbove = bot.get_user(int(userAboveID))
+            try:
+                name = userAbove.display_name
+            except:
+                name = "(unknown)"
+
+            if not userAboveID in leaderboardGivenTop:
+                output += "...\n"
+
+            output += f"{position - 1}. {name} - {leaderboard[str(userAboveID)]['given']} hugs given\n"
+            output += f"**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['given']} hugs given**\n"
+
+            try:
+                userBelowID = leaderboardGiven[position][0]
+                userBelow = None
+                if message.guild:
+                    userBelow = message.guild.get_member(int(userBelowID))
+                if not userBelow:
+                    userBelow = bot.get_user(int(userBelowID))
+                try:
+                    name = userBelow.display_name
+                except:
+                    name = "(unknown)"
+
+                output += f"{position + 1}. {name} - {leaderboard[str(userBelowID)]['given']} hugs given\n"
+            except:
+                pass
 
         leaderboardReceived = sorted(
             leaderboard.items(), key=lambda x: x[1]["received"], reverse=True
@@ -402,7 +432,7 @@ async def on_message(message: discord.Message):
 
         leaderboardReceivedTop = leaderboardReceived[:5]
 
-        output = "------------\ntop huggees:\n"
+        output += "------------\ntop huggees:\n"
 
         for i, (id, data) in enumerate(leaderboardReceivedTop):
             if data["received"] == 0:
@@ -430,9 +460,46 @@ async def on_message(message: discord.Message):
                 )
                 + 1
             )
-            output += f"...\n**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received**"
 
-        await message.channel.send(output)
+            userAboveID = leaderboardReceived[position - 2][0]
+            userAbove = None
+            if message.guild:
+                userAbove = message.guild.get_member(int(userAboveID))
+            if not userAbove:
+                userAbove = bot.get_user(int(userAboveID))
+            try:
+                name = userAbove.display_name
+            except:
+                name = "(unknown)"
+
+            if not userAboveID in leaderboardReceivedTop:
+                output += "...\n"
+
+            output += f"{position - 1}. {name} - {leaderboard[str(userAboveID)]['received']} hugs received\n"
+
+            output += f"**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received**\n"
+
+            try:
+                userBelowID = leaderboardReceived[position][0]
+                userBelow = None
+                if message.guild:
+                    userBelow = message.guild.get_member(int(userBelowID))
+                if not userBelow:
+                    userBelow = bot.get_user(int(userBelowID))
+                try:
+                    name = userBelow.display_name
+                except:
+                    name = "(unknown)"
+
+                output += f"{position + 1}. {name} - {leaderboard[str(userBelowID)]['received']} hugs received\n"
+            except:
+                pass
+
+        await message.reply(output)
+
+    elif command == "ping":
+        await message.reply(f"pong! ({round(bot.latency * 1000)}ms)")
+        return
 
     elif command == "help":
         await message.reply(
@@ -440,6 +507,7 @@ async def on_message(message: discord.Message):
 **{prefix}hug @user** - hug someone!
 **{prefix}help** - show this message
 **{prefix}leaderboard** - see the top huggers and huggees
+**{prefix}ping** - check the bot's latency
 **{prefix}nick** - change hugbot's nickname in this server
 **{prefix}dontautohug** - hugbot will no longer autohug you
 **{prefix}doautohug** - hugbot will autohug you again
