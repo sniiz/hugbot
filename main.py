@@ -365,12 +365,12 @@ async def on_message(message: discord.Message):
 
         leaderboardGivenTop = leaderboardGiven[:5]
 
-        output = "top huggers:\n"
+        output = "top huggers: ```\n"
 
         for i, (id, data) in enumerate(leaderboardGivenTop):
             if data["given"] == 0:
                 break
-            bold = "**" if message.author.id == int(id) else ""
+            bold = "  < you!" if message.author.id == int(id) else ""
             user = None
             if message.guild:
                 user = message.guild.get_member(int(id))
@@ -379,8 +379,8 @@ async def on_message(message: discord.Message):
             try:
                 name = user.display_name
             except:
-                name = "(unknown)"
-            output += f"{bold}{i + 1}. {name} - {data['given']} hugs given{bold}\n"
+                name = "(could not get name)"
+            output += f"{i + 1}. {name} - {data['given']} hugs given{bold}\n"
 
         topIds = list(int(x[0]) for x in leaderboardGivenTop)
         ids = list(int(x[0]) for x in leaderboardGiven)
@@ -402,13 +402,13 @@ async def on_message(message: discord.Message):
             try:
                 name = userAbove.display_name
             except:
-                name = "(unknown)"
+                name = "(could not get name)"
 
             if not userAboveID in leaderboardGivenTop:
                 output += "...\n"
 
             output += f"{position - 1}. {name} - {leaderboard[str(userAboveID)]['given']} hugs given\n"
-            output += f"**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['given']} hugs given**\n"
+            output += f"{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['given']} hugs given  < you!\n"
 
             try:
                 userBelowID = leaderboardGiven[position][0]
@@ -420,7 +420,7 @@ async def on_message(message: discord.Message):
                 try:
                     name = userBelow.display_name
                 except:
-                    name = "(unknown)"
+                    name = "(could not get name)"
 
                 output += f"{position + 1}. {name} - {leaderboard[str(userBelowID)]['given']} hugs given\n"
             except:
@@ -432,12 +432,12 @@ async def on_message(message: discord.Message):
 
         leaderboardReceivedTop = leaderboardReceived[:5]
 
-        output += "------------\ntop huggees:\n"
+        output += "\ntop huggees: ```\n"
 
         for i, (id, data) in enumerate(leaderboardReceivedTop):
             if data["received"] == 0:
                 break
-            bold = "**" if message.author.id == int(id) else ""
+            bold = "  < you!" if message.author.id == int(id) else ""
             user = None
             if message.guild:
                 user = message.guild.get_member(int(id))
@@ -446,10 +446,8 @@ async def on_message(message: discord.Message):
             try:
                 name = user.display_name
             except:
-                name = "(unknown)"
-            output += (
-                f"{bold}{i + 1}. {name} - {data['received']} hugs received{bold}\n"
-            )
+                name = "(could not get name)"
+            output += f"{i + 1}. {name} - {data['received']} hugs received{bold}\n"
 
         topIds = list(int(x[0]) for x in leaderboardReceivedTop)
         ids = list(int(x[0]) for x in leaderboardReceived)
@@ -470,14 +468,14 @@ async def on_message(message: discord.Message):
             try:
                 name = userAbove.display_name
             except:
-                name = "(unknown)"
+                name = "(cound not get name)"
 
             if not userAboveID in leaderboardReceivedTop:
                 output += "...\n"
 
             output += f"{position - 1}. {name} - {leaderboard[str(userAboveID)]['received']} hugs received\n"
 
-            output += f"**{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received**\n"
+            output += f"{position}. {message.author.display_name} - {leaderboard[str(message.author.id)]['received']} hugs received  < you\n"
 
             try:
                 userBelowID = leaderboardReceived[position][0]
@@ -489,7 +487,7 @@ async def on_message(message: discord.Message):
                 try:
                     name = userBelow.display_name
                 except:
-                    name = "(unknown)"
+                    name = "(could not get name)"
 
                 output += f"{position + 1}. {name} - {leaderboard[str(userBelowID)]['received']} hugs received\n"
             except:
@@ -498,7 +496,7 @@ async def on_message(message: discord.Message):
         await message.reply(output)
 
     elif command == "ping":
-        await message.reply(f"pong! ({round(bot.latency * 1000)}ms)")
+        await message.reply(f"pong! `({round(bot.latency * 1000)}ms)`")
         return
 
     elif command == "help":
