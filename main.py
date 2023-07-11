@@ -116,14 +116,35 @@ async def on_message(message: discord.Message):
             target = message.mentions[0]
             if target.id == bot.user.id:
                 await message.reply(
-                    "unfortunately, you can't hug me. i am a bot, after all :("
+                    "while i appreciate the thought, i can't hug myself :("
                 )
                 return
             if target.bot:
-                await message.reply("sadly bots can't accept hugs :(")
+                await message.reply(
+                    "unfortunately my fellow robot brethren cannot accept hugs :("
+                )
+                return
+        elif message.reference:
+            target = await message.channel.fetch_message(message.reference.message_id)
+            target = target.author
+            if target.id == bot.user.id:
+                await message.reply(
+                    "while i appreciate the thought, i can't hug myself :("
+                )
+                return
+            if target.bot:
+                await message.reply(
+                    "unfortunately my fellow robot brethren cannot accept hugs :("
+                )
                 return
         else:
-            await message.reply("mention someone to hug them!")
+            await message.reply("mention or reply to someone to hug them!")
+            return
+
+        if target.id == message.author.id:
+            await message.reply(
+                "you can't hug yourself on discord, but you can in real life! actually, go do it now :D"
+            )
             return
 
         if "-nd" in message.content:
@@ -140,12 +161,6 @@ async def on_message(message: discord.Message):
         if messageText:
             messageText = filter(lambda x: not x.startswith("<@"), messageText)
             messageText = " ".join(messageText)
-
-        if target.id == message.author.id:
-            await message.reply(
-                "you can't hug yourself on discord, but you can do it in real life! actually, go do it now :D"
-            )
-            return
 
         url = target.display_avatar.url
 
@@ -203,6 +218,7 @@ async def on_message(message: discord.Message):
         log("sending")
 
         channel = message.channel
+        botReply = None
         guildId = message.guild.id if message.guild else 0
         if guildId == hugTargetServer:
             if not message.channel.id == hugTargetChannel and not message.author.bot:
@@ -212,14 +228,22 @@ async def on_message(message: discord.Message):
                     "<3",
                     "^^",
                     "c:",
+                    ":3",  # huzzah
+                    ":P",
                 ]
-                await message.reply(f"<#{hugTargetChannel}> {random.choice(smileys)}")
-            channel = bot.get_channel(hugTargetChannel)
+                channel = bot.get_channel(hugTargetChannel)
+                botReply = await channel.send(
+                    f"<@{message.author.id}> offers a hug to <@{target.id}>! {target.display_name}, react with 🫂 to accept!",
+                    file=discord.File(f"{path}{session}R.png", filename="hug.png"),
+                )
+                # await message.reply(f"<#{hugTargetChannel}> {random.choice(smileys)}")
+                await message.reply(f"{botReply.jump_url} {random.choice(smileys)}")
 
-        botReply = await channel.send(
-            f"<@{message.author.id}> offers a hug to <@{target.id}>! {target.display_name}, react with 🫂 to accept!",
-            file=discord.File(f"{path}{session}R.png", filename="hug.png"),
-        )
+        if not botReply:
+            botReply = await channel.send(
+                f"<@{message.author.id}> offers a hug to <@{target.id}>! {target.display_name}, react with 🫂 to accept!",
+                file=discord.File(f"{path}{session}R.png", filename="hug.png"),
+            )
 
         os.remove(f"{path}{session}R.png")
 
@@ -233,11 +257,11 @@ async def on_message(message: discord.Message):
         else:
             try:
                 reaction, user = await bot.wait_for(
-                    "reaction_add", timeout=1200.0, check=check
+                    "reaction_add", timeout=1200.0, check=check  # 20 minutes
                 )
             except:
                 await botReply.edit(
-                    content=f"<@{target.id}> didn't accept {message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug in time! :'(",
+                    content=f"{message.author.display_name}'{'' if message.author.display_name[-1] == 's' else 's'} hug offer to {target.display_name} went unaccepted for 20 minutes :(",
                     attachments=[],
                 )
                 os.remove(f"{path}{session}A.png")
@@ -334,25 +358,28 @@ async def on_message(message: discord.Message):
 
         if delete:
             await asyncio.sleep(1200)
-
             await botReply.edit(attachments=[])
 
     elif command == "dontautohug":
         autoHugBlacklist = open(f"{path}donthug.log", "r").read().splitlines()
-        await message.reply("ok :(")
         if not str(message.author.id) in autoHugBlacklist:
             autoHugBlacklist.append(str(message.author.id))
             with open(f"{path}donthug.log", "w") as f:
                 f.write("\n".join(autoHugBlacklist))
+            await message.reply("ok i won't hug you anymore")
+        else:
+            await message.reply("i already can't hug you :(")
         return
 
     elif command == "doautohug":
         autoHugBlacklist = open(f"{path}donthug.log", "r").read().splitlines()
-        await message.reply("yay :)")
         if str(message.author.id) in autoHugBlacklist:
             autoHugBlacklist.remove(str(message.author.id))
             with open(f"{path}donthug.log", "w") as f:
                 f.write("\n".join(autoHugBlacklist))
+            await message.reply("yay now i can hug you again :D")
+        else:
+            await message.reply("i can already hug you :D")
         return
 
     elif command == "leaderboard":
@@ -508,7 +535,6 @@ async def on_message(message: discord.Message):
 **{prefix}help** - show this message
 **{prefix}leaderboard** - see the top huggers and huggees
 **{prefix}ping** - check the bot's latency
-**{prefix}nick** - change hugbot's nickname in this server
 **{prefix}dontautohug** - hugbot will no longer autohug you
 **{prefix}doautohug** - hugbot will autohug you again
 if you have any questions or suggestions, `@smhaley` will be happy to help <3

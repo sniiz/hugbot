@@ -1,5 +1,7 @@
 # hugbot
 
+![server](https://cronitor.io/badges/g5sIFD/production/y9B7Hzsk3dxT6B0sqRcBC0dBSuM.svg)
+
 silly discord bot to hug your friends (or enemies, it doesn't care) through the power of the internet
 
 ## ⚠️ WARNING ⚠️
